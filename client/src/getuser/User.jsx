@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import "./User.css";
 import axios from "axios";
 import { Link } from 'react-router-dom';
+import toast from "react-hot-toast";
+
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 const User = () => {
   const [users, setUsers] = useState([]);
@@ -9,8 +12,8 @@ const User = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/users");
-        setUsers(response.data);
+        const response = await axios.get(`${API_URL}/api/users`);
+        setUsers(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.log("Error while fetching data", error);
       }
@@ -18,6 +21,17 @@ const User = () => {
 
     fetchData();
   }, []);
+
+  const deleteUser = async (userId) => {
+    try {
+      const response = await axios.delete(`${API_URL}/api/delete/user/${userId}`);
+      setUsers((prev) => prev.filter((u) => u._id !== userId));
+      toast.success(response.data.message || "User deleted successfully", { position: "top-right" });
+    } catch (error) {
+      toast.error("Could not delete user", { position: "top-right" });
+      console.log(error);
+    }
+  };
 
   return (
     <div className='userTable'>
@@ -43,10 +57,14 @@ const User = () => {
                 <td>{user.email}</td>
                 <td>{user.address}</td>
                 <td className='actionButtons'>
-                  <button type="button" className="btn btn-info">
+                  <Link to={`/edit/${user._id}`} className="btn btn-info">
                     <i className="fa-solid fa-pen-to-square"></i>
-                  </button>
-                  <button type="button" className="btn btn-danger">
+                  </Link>
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => deleteUser(user._id)}
+                  >
                     <i className="fa-solid fa-trash"></i>
                   </button>
                 </td>
